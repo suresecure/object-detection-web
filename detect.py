@@ -28,7 +28,7 @@ def init_net(index):
     caffe.set_mode_gpu()
     caffe.set_device(index)
     cfg.GPU_ID = index
-    return person_detection_net = caffe.Net(prototxt, caffemodel, caffe.TEST)
+    return caffe.Net(prototxt, caffemodel, caffe.TEST)
 
 CLASSES = model_config.CLASSES
 
@@ -40,7 +40,7 @@ def detect_image(net, im):
     timer.tic()
     scores, boxes = im_detect(net, im)
     timer.toc()
-    print(str(current_process().index)+' Detection took {:.3f}s for '
+    print('Detection took {:.3f}s for '
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections for each class
@@ -73,8 +73,8 @@ def detect_image(net, im):
     return targets
 
     # targets = []
-    img = cv2.imdecode(np.asarray(bytearray(imgstream), dtype=np.uint8), -1)
-    return detect_image(person_detection_net, img)
+    #img = cv2.imdecode(np.asarray(bytearray(imgstream), dtype=np.uint8), -1)
+    #return detect_image(person_detection_net, img)
     # result = detect_image(person_detection_net, img)
 
     # for r in result:
@@ -85,5 +85,10 @@ def detect_image(net, im):
         # targets.append({'x':x,'y':y,'w':w,'h':h})
 
     # return result
-if __name__ == 'main':
+if __name__ == '__main__':
+    person_detection_net = init_net(0)
+    img = cv2.imread("/home/xtd/1.jpg")
+    result = detect_image(person_detection_net, img)
+    print result
+
 
