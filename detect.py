@@ -111,4 +111,3 @@ if __name__ == '__main__':
     for k in result_txts:
         result_txts[k].close()
 
-

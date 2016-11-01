@@ -22,14 +22,17 @@ from fast_rcnn.nms_wrapper import nms
 def init_net(index):
     prototxt = model_config.prototxt
     caffemodel = model_config.caffemodel
+    print prototxt
 
     cfg.TEST.HAS_RPN = True  # Use RPN for proposals
     cfg.TEST.BBOX_REG = False
     cfg.TEST.SCALES = model_config.TEST_SCALES
     cfg.TEST.RPN_PRE_NMS_TOP_N = model_config.TEST_RPN_PRE_NMS_TOP_N
     cfg.TEST.RPN_POST_NMS_TOP_N = model_config.TEST_RPN_POST_NMS_TOP_N
+    print cfg
 
     caffe.set_mode_gpu()
+    print index
     # index = 1
     print "device index:"+str(index)
     caffe.set_device(index)

@@ -1,6 +1,6 @@
-prototxt = "/home/mythxcq/faster_rcnn_person_detection_model/faster_rcnn_test.pt"
-caffemodel = "/home/mythxcq/faster_rcnn_person_detection_model/vgg16_faster_rcnn_20160425.caffemodel"
 
+prototxt = "/home/xtd/object_detection_models/vgg16-faster-rcnn/test.prototxt"
+caffemodel = "/home/xtd/object_detection_models/vgg16-faster-rcnn/vgg16_faster_rcnn_20160425.caffemodel"
 CLASSES = ('__background__',
            'aeroplane', 'bicycle', 'bird', 'boat',
            'bottle', 'bus', 'car', 'cat', 'chair',
