@@ -1,9 +1,8 @@
 import os
 import optparse
-import settings
 import logging
 import time
-import model_config
+import phone_call_model_config as model_config
 
 import _init_paths
 from utils.timer import Timer
@@ -28,7 +27,7 @@ def init_net(index):
     caffe.set_mode_gpu()
     caffe.set_device(index)
     cfg.GPU_ID = index
-    return person_detection_net = caffe.Net(prototxt, caffemodel, caffe.TEST)
+    return caffe.Net(prototxt, caffemodel, caffe.TEST)
 
 CLASSES = model_config.CLASSES
 
@@ -40,13 +39,13 @@ def detect_image(net, im):
     timer.tic()
     scores, boxes = im_detect(net, im)
     timer.toc()
-    print(str(current_process().index)+' Detection took {:.3f}s for '
+    print('Detection took {:.3f}s for '
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections for each class
     # CONF_THRESH = 0.0
 
-    CONF_THRESH = 0.4
+    CONF_THRESH = 0.1
     NMS_THRESH = 0.1
 
     targets = []
@@ -72,18 +71,44 @@ def detect_image(net, im):
             targets.append({'x':x,'y':y,'w':w,'h':h, 'class': ac})
     return targets
 
-    # targets = []
-    img = cv2.imdecode(np.asarray(bytearray(imgstream), dtype=np.uint8), -1)
-    return detect_image(person_detection_net, img)
-    # result = detect_image(person_detection_net, img)
+if __name__ == '__main__':
+    person_detection_net = init_net(0)
+    source_dir = '/home/mythxcq/july_new_person_events/7005/'
+    if not os.path.exists('results'):
+        os.makedirs('results')
+    result_dirs = {}
+    result_txts = {}
+    for ec in model_config.active_classes:
+        result_dirs[ec] = 'results/'+ec
+        result_txts[ec] = open('results/'+ec+'.txt', 'w')
 
-    # for r in result:
-        # x = (int)(r[0].item())
-        # y = (int)(r[1].item())
-        # w = (int)(r[2].item())-x
-        # h = (int)(r[3].item())-y
-        # targets.append({'x':x,'y':y,'w':w,'h':h})
+    for k in result_dirs:
+        if not os.path.exists(result_dirs[k]):
+            os.makedirs(result_dirs[k])
 
-    # return result
-if __name__ == 'main':
+    current_num = 0
+    for eachjpg in os.listdir(source_dir):
+        if os.path.isfile(os.path.join(source_dir, eachjpg)) and eachjpg.endswith('.jpg'):
+            # print eachjpg
+            current_num+=1
+            img = cv2.imread(os.path.join(source_dir, eachjpg))
+            targets = detect_image(person_detection_net, img)
+            status = {}
+            for ec in model_config.active_classes:
+                status[ec] = False
+
+            for et in targets:
+                cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
+                              (255,0,0))
+                status[et['class']] = True
+            for k in status:
+                if status[k]:
+                    cv2.imwrite(os.path.join(result_dirs[k], eachjpg), img)
+                    result_txts[k].write(eachjpg + '\n')
+            print 'current_num: ', current_num
+
+    # close all txt files
+    for k in result_txts:
+        result_txts[k].close()
+
 
