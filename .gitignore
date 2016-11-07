@@ -5,3 +5,6 @@
 *.swp
 .gitattributes
 .ropeproject
+config.py
+settings.py
+model_config.py

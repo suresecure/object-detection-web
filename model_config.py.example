@@ -1,4 +1,3 @@
-
 prototxt = "/home/xtd/object_detection_models/vgg16-faster-rcnn/test.prototxt"
 caffemodel = "/home/xtd/object_detection_models/vgg16-faster-rcnn/vgg16_faster_rcnn_20160425.caffemodel"
 CLASSES = ('__background__',

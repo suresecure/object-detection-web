@@ -73,14 +73,16 @@ def detect_image(net, im):
 
 if __name__ == '__main__':
     person_detection_net = init_net(0)
-    source_dir = '/home/mythxcq/july_new_person_events/7005/'
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    # source_dir = '/home/mythxcq/july_new_person_events/7005/'
+    source_dir = 'util/lost_call'
+    result_dir = 'lost_results'
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
     result_dirs = {}
     result_txts = {}
     for ec in model_config.active_classes:
-        result_dirs[ec] = 'results/'+ec
-        result_txts[ec] = open('results/'+ec+'.txt', 'w')
+        result_dirs[ec] = result_dir+'/'+ec
+        result_txts[ec] = open(result_dir+'/'+ec+'.txt', 'w')
 
     for k in result_dirs:
         if not os.path.exists(result_dirs[k]):
