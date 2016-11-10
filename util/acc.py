@@ -4,8 +4,8 @@ import shutil
 
 img_dir = '/home/mythxcq/july_new_person_events/call'
 gttxt = 'callgt.txt'
-resulttxt = 'call_01.txt'
-lost_dir = 'lost_call'
+resulttxt = '../call_results/call.txt'
+lost_dir = '600_02_lost_call'
 if not os.path.exists(lost_dir):
     os.makedirs(lost_dir)
 
