@@ -1,9 +1,25 @@
 import os
+import optparse
+import pickle
 
-source_dir = '/home/mythxcq/july_new_person_events/sun_glasses_back'
-target_file = 'sunglassgt.txt'
-with open(target_file, 'w') as targetf:
-    for ef in os.listdir(source_dir):
-        if os.path.isfile(os.path.join(source_dir, ef)):
-            targetf.write(ef+'\n')
+def get_dir_list(dir_name):
+    files = []
+    for ef in os.listdir(dir_name):
+        if os.path.isfile(os.path.join(dir_name, ef)):
+            files.append(ef)
+    return files
+
+if __name__ == '__main__':
+    parser = optparse.OptionParser()
+    (options, args) = parser.parse_args()
+    img_dir = args[0]
+
+    gt = []
+    for ed in os.listdir(img_dir):
+        if(os.path.isdir(os.path.join(img_dir, ed)) and ed != '7005'):
+            files = get_dir_list(os.path.join(img_dir, ed))
+            gt.append({ed: files})
+
+    with open(os.path.join(img_dir, 'gt.pickle'), 'w') as f:
+        pickle.dump(gt, f)
 
