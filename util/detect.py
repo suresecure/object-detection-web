@@ -4,7 +4,8 @@ import logging
 import time
 import pickle
 import json
-import model_configs.rfcn_person_detection_model_config as model_config
+# import model_configs.rfcn_person_detection_model_config as model_config
+import model_configs.faster_rcnn_person_detection_model_config as model_config
 # import phone_call_model_config as model_config
 # import call_sunglass_23c_model_config as model_config
 # import model_config as model_config
@@ -89,25 +90,26 @@ def detect_file(file_name, conf_thd, object_detection_net):
     cv2.imshow('img', img)
     cv2.waitKey(0)
 
-def detect_dir(dir_name, result_dir, show_result, store_result, object_detection_net):
+def detect_dir(dir_name, result_dir, conf_thd, show_result, store_result, object_detection_net):
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 
     current_num = 0
     result_list = []
     for eachjpg in os.listdir(dir_name):
-        if os.path.isfile(os.path.join(dir_name, eachjpg)) and eachjpg.endswith('.jpg'):
-            # print eachjpg
+        if os.path.isfile(os.path.join(dir_name, eachjpg)) and eachjpg.endswith('.jpeg'):
+            print eachjpg
             current_num+=1
             img = cv2.imread(os.path.join(dir_name, eachjpg))
             targets = detect_image(object_detection_net, img)
 
             if show_result:
                 for et in targets:
-                    cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
-                                  (255,0,0))
-                    cv2.imshow('result', img)
-                    cv2.waitKey(0)
+                    if et['conf'] > conf_thd:
+                        cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
+                                      (255,0,0))
+                cv2.imshow('result', img)
+                cv2.waitKey(0)
             if store_result:
                 for k in status:
                     cv2.imwrite(os.path.join(result_dirs, eachjpg), img)
@@ -152,5 +154,5 @@ if __name__ == '__main__':
     if os.path.isfile(input_name):
         detect_file(input_name, options.conf_thd, object_detection_net)
     elif os.path.isdir(input_name):
-        detect_dir(input_name, result_dir, options.show_result, options.store_result, object_detection_net)
+        detect_dir(input_name, result_dir, options.conf_thd, options.show_result, options.store_result, object_detection_net)
 
