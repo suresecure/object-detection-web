@@ -5,7 +5,8 @@ import time
 import pickle
 import json
 # import model_configs.rfcn_person_detection_model_config as model_config
-import model_configs.faster_rcnn_person_detection_model_config as model_config
+import model_configs.faster_rcnn_call_face_27c_model_config as model_config
+# import model_configs.faster_rcnn_person_detection_model_config as model_config
 # import phone_call_model_config as model_config
 # import call_sunglass_23c_model_config as model_config
 # import model_config as model_config
@@ -86,6 +87,7 @@ def detect_file(file_name, conf_thd, object_detection_net):
             print 'draw'
             cv2.rectangle(img, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
                           (255,0,0),3)
+            cv2.putText(img, t['class'], (t['x'],t['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
     cv2.imwrite('detect_file_result.jpg', img)
     cv2.imshow('img', img)
     cv2.waitKey(0)
@@ -97,28 +99,34 @@ def detect_dir(dir_name, result_dir, conf_thd, show_result, store_result, object
     current_num = 0
     result_list = []
     for eachjpg in os.listdir(dir_name):
-        if os.path.isfile(os.path.join(dir_name, eachjpg)) and eachjpg.endswith('.jpeg'):
+        if os.path.isfile(os.path.join(dir_name, eachjpg)):
+            # and eachjpg.endswith('.jpeg'):
             print eachjpg
             current_num+=1
-            img = cv2.imread(os.path.join(dir_name, eachjpg))
-            targets = detect_image(object_detection_net, img)
+            try:
+                img = cv2.imread(os.path.join(dir_name, eachjpg))
+                targets = detect_image(object_detection_net, img)
 
-            if show_result:
-                for et in targets:
-                    if et['conf'] > conf_thd:
-                        cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
-                                      (255,0,0))
-                cv2.imshow('result', img)
-                cv2.waitKey(0)
-            if store_result:
-                for k in status:
-                    cv2.imwrite(os.path.join(result_dirs, eachjpg), img)
-            if(len(targets)>0):
-                result_list.append((eachjpg, targets))
-                print targets
-                # result_txt.write(eachjpg+':\n')
-                # result_txt.write(targets)
-            print 'current_num: ', current_num
+                if show_result:
+                    for et in targets:
+                        if et['conf'] > conf_thd:
+                            cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
+                                          (255,0,0))
+                            cv2.putText(img, et['class'], (et['x'],et['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                    cv2.imshow('result', img)
+                    cv2.waitKey(0)
+                if store_result:
+                    for k in status:
+                        cv2.imwrite(os.path.join(result_dirs, eachjpg), img)
+                if(len(targets)>0):
+                    result_list.append((eachjpg, targets))
+                    # print targets
+                    # result_txt.write(eachjpg+':\n')
+                    # result_txt.write(targets)
+                print 'current_num: ', current_num
+            except:
+                print 'cannot open :'+eachjpg
+                pass
 
     # close all txt files
     file_name = '/{0}-{1}-{2}.pickle'.format(model_config.TEST_SCALES[0],

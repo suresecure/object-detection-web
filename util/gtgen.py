@@ -14,11 +14,12 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     img_dir = args[0]
 
-    gt = []
+    gt = {}
     for ed in os.listdir(img_dir):
-        if(os.path.isdir(os.path.join(img_dir, ed)) and ed != '7005'):
+        if(os.path.isdir(os.path.join(img_dir, ed)) and ed != '7005' and
+           ed != 'bad'):
             files = get_dir_list(os.path.join(img_dir, ed))
-            gt.append({ed: files})
+            gt[ed] = files
 
     with open(os.path.join(img_dir, 'gt.pickle'), 'w') as f:
         pickle.dump(gt, f)
