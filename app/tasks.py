@@ -96,7 +96,7 @@ def detect_image(net, im):
             y = (int)(r[1].item())
             w = (int)(r[2].item())-x
             h = (int)(r[3].item())-y
-            targets.append({'x':x,'y':y,'w':w,'h':h, 'class': ac, 'conf': r[4]})
+            targets.append({'x':x,'y':y,'w':w,'h':h, 'class': ac, 'conf': int(100.0*r[4])})
     return targets
 
     # person_idx = CLASSES.index('person')
