@@ -3,3 +3,4 @@ lib_path = "/home/mythxcq/work/rfcn/py-R-FCN/lib"
 
 UPLOAD_FOLDER = '/tmp/caffe_demos_uploads'
 UPLOAD_FOLDER_DETECTED = '/tmp/caffe_demos_uploads_detected'
+UPLOAD_FOLDER_DRAW = '/tmp/caffe_demos_uploads_draw'

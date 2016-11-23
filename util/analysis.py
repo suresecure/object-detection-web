@@ -74,14 +74,26 @@ if __name__ == '__main__':
                               # (255,0,0),3)
         # cv2.imshow('timg', img)
         # cv2.waitKey(0)
-    focus_imgs_dir = 'focus_imgs'
-    if os.path.exists(focus_imgs_dir):
-        shutil.rmtree(focus_imgs_dir)
-    os.makedirs(focus_imgs_dir)
+    if False:
+        focus_imgs_dir = 'focus_imgs'
+        if os.path.exists(focus_imgs_dir):
+            shutil.rmtree(focus_imgs_dir)
+        os.makedirs(focus_imgs_dir)
 
-    focus_img_set = recall_results_dict['mask'][-20][2]
-    for img in focus_img_set:
-        shutil.copy(os.path.join(img_dir, '7005', img).rstrip(), os.path.join(focus_imgs_dir, img).rstrip())
+        results_jpg_list = []
+        for r in results:
+            results_jpg_list.append(r[0])
+        focus_img_set = recall_results_dict['person'][-20][1]
+        for img in focus_img_set:
+            # shutil.copy(os.path.join(img_dir, '7005', img).rstrip(), os.path.join(focus_imgs_dir, img).rstrip())
+            img_data = cv2.imread(os.path.join(img_dir, '7005', img).rstrip())
+            targets = results[results_jpg_list.index(img)][1]
+            for t in targets:
+                if t['class'] == 'person':
+                    cv2.rectangle(img_data, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
+                                  (255,0,0),3)
+            cv2.imwrite(os.path.join(focus_imgs_dir, img).rstrip(), img_data)
+
     # img = cv2.imread(os.path.join(img_dir, ej).rstrip())
     # cv2.imshow('img', img)
     # cv2.waitKey(0)

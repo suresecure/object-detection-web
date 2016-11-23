@@ -5,8 +5,8 @@ import time
 import pickle
 import json
 # import model_configs.rfcn_person_detection_model_config as model_config
-import model_configs.faster_rcnn_call_face_27c_model_config as model_config
-# import model_configs.faster_rcnn_person_detection_model_config as model_config
+import model_configs.faster_rcnn_person_detection_model_config as model_config
+# import model_configs.faster_rcnn_call_face_27c_model_config as model_config
 # import phone_call_model_config as model_config
 # import call_sunglass_23c_model_config as model_config
 # import model_config as model_config

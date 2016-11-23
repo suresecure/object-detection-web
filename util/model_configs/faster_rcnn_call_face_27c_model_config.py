@@ -1,5 +1,5 @@
 prototxt = "/home/mythxcq/models/faster-rcnn-vgg16-27c-call-face/test_27c.pt"
-caffemodel = "/home/mythxcq/models/faster-rcnn-vgg16-27c-call-face/vgg16_faster_rcnn_27c_iter_100000.caffemodel"
+caffemodel = "/home/mythxcq/models/faster-rcnn-vgg16-27c-call-face/vgg16_faster_rcnn_27c_1117_iter_100000.caffemodel"
 
 CLASSES = ('__background__',
            'aeroplane', 'bicycle', 'bird', 'boat',
@@ -8,7 +8,7 @@ CLASSES = ('__background__',
            'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor',
            'call', 'sunglasses', 'mask', 'hat', 'helmet', 'glasses')
-active_classes = ['call', 'sunglasses', 'hat', 'mask']
+active_classes = ['call', 'sunglasses', 'hat', 'helmet', 'mask']
 
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
