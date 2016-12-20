@@ -10,4 +10,4 @@ config.py
 settings.py
 model_config.py
 device_count.txt
-cudautil/get_cuda_device_count
+app/cudautil/get_cuda_device_count
