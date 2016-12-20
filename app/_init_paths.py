@@ -24,3 +24,5 @@ add_path(config.caffe_path)
 # Add lib to PYTHONPATH
 # lib_path = "/home/mythxcq/work/faster_rcnn/py-faster-rcnn/lib"
 add_path(config.lib_path)
+
+add_path(this_dir+'/cudautil')

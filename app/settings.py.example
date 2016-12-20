@@ -2,7 +2,7 @@ from kombu import Queue, Exchange
 # SECRET_KEY = 'not_a_secret'
 # BROKER_URL='amqp://client:client@192.168.3.71:5672//'
 broker_url ='amqp://guest:guest@localhost:5672//'
-# backend rpc will stuck
+# backend rpc will stuck for celery 3
 # amqp backend is deprecated in celery 4, use rpc backend instead
 result_backend ='rpc://'
 # CELERY_RESULT_PERSISTENT = False
