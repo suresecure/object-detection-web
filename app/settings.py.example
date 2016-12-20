@@ -1,17 +1,24 @@
 from kombu import Queue, Exchange
 # SECRET_KEY = 'not_a_secret'
 # BROKER_URL='amqp://client:client@192.168.3.71:5672//'
-BROKER_URL='amqp://guest:guest@localhost:5672//'
+broker_url ='amqp://guest:guest@localhost:5672//'
 # backend rpc will stuck
-CELERY_RESULT_BACKEND='amqp://'
+# amqp backend is deprecated in celery 4, use rpc backend instead
+result_backend ='rpc://'
 # CELERY_RESULT_PERSISTENT = False
-CELERYD_CONCURRENCY = 1
+worker_concurrency = 1
 # CELERYD_PREFETCH_MULTIPLIER = 1
 # CELERY_ACKS_LATE = True
-CELERY_ENABLE_UTC = True
-CELERY_TIMEZONE = 'Etc/UTC'
+# CELERY_ENABLE_UTC = True
+timezone = 'Etc/UTC'
 
-CELERY_QUEUES = (
+# default de-serializer of celery 4 is json, it cannot deal with image binary stream correctly
+# still use pickle
+task_serializer = 'pickle'
+result_serializer = 'pickle'
+accept_content = {'pickle'}
+
+task_queues = (
     Queue(
         'important',
         exchange=Exchange('important'),

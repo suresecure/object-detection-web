@@ -44,11 +44,11 @@ from celery.signals import worker_process_init
 from celery.signals import worker_init
 from billiard import current_process
 @worker_init.connect
-def init_workers(sender, signal):
+def init_workers(sender=None, headers=None, body=None, **kwargs):
     print "init workers"
     # batch_size = 5
 @worker_process_init.connect
-def configure_workers(sender, signal):
+def configure_workers(sender=None, headers=None, body=None, **kwargs):
     init_net(current_process().index)
 
 CLASSES = model_config.CLASSES
