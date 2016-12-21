@@ -1,3 +1,5 @@
+#there is a long delay between the app calling task and the worker receiving the task for celery 4.0.2
+#so use celry 3.1.25 now
 from kombu import Queue, Exchange
 import _init_paths
 # SECRET_KEY = 'not_a_secret'
@@ -28,4 +30,3 @@ task_queues = (
         delivery_mode=1,
     ),
 )
-        # queue_arguments={'x-max-length': 50}

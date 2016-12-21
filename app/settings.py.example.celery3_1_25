@@ -1,0 +1,18 @@
+from kombu import Queue, Exchange
+import _init_paths
+
+CELERY_BROKER_URL ='amqp://guest:guest@localhost:5672//'
+CELERY_RESULT_BACKEND ='amqp://'
+with open("device_count.txt", "r") as f:
+    CELERY_WORKER_CONCURRENCY = int(f.read())
+#CELERY_WORKER_CONCURRENCY = 1
+CELERY_TIMEZONE= 'Etc/UTC'
+
+CELERY_QUEUES = (
+    Queue(
+        'important',
+        exchange=Exchange('important'),
+        routing_key="important",
+        delivery_mode=1,
+    ),
+)
