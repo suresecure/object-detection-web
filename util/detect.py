@@ -53,7 +53,7 @@ def detect_image(net, im):
     # CONF_THRESH = 0.0
 
     CONF_THRESH = 0.01
-    NMS_THRESH = 0.1
+    NMS_THRESH = 0.3
 
     targets = []
     for ac in model_config.active_classes:
