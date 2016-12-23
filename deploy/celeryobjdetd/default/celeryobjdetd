@@ -8,8 +8,8 @@ CELERYD_NODES="worker1"
 #CELERYD_NODES=10
 
 # Absolute or relative path to the 'celery' command:
-#CELERY_BIN="/usr/local/bin/celery"
-CELERY_BIN="/home/mythxcq/work/grpc_work/ivs-rpc-work/ivs-rpc-venv/bin/celery"
+CELERY_BIN="/usr/local/bin/celery"
+#CELERY_BIN="/home/mythxcq/work/grpc_work/ivs-rpc-work/ivs-rpc-venv/bin/celery"
 #CELERY_BIN="/virtualenvs/def/bin/celery"
 
 # App instance to use
@@ -19,7 +19,7 @@ CELERY_APP="tasks:the_celery"
 #CELERY_APP="proj.tasks:app"
 
 # Where to chdir at start.
-CELERYD_CHDIR="/home/mythxcq/work/grpc_work/ivs-rpc-work/ivs-rpc/python/ivs-person-detection"
+CELERYD_CHDIR="/home/srzn/work/object-detection-web/app"
 #/opt/Myproject/"
 
 # Extra command-line arguments to the worker
@@ -32,8 +32,8 @@ CELERYD_PID_FILE="/var/run/celery/%N.pid"
 # Workers should run as an unprivileged user.
 #   You need to create this user manually (or you can choose
 #   a user/group combination that already exists, e.g. nobody).
-CELERYD_USER="mythxcq"
-CELERYD_GROUP="mythxcq"
+CELERYD_USER="srzn"
+CELERYD_GROUP="srzn"
 
 # If enabled pid and log directories will be created if missing,
 # and owned by the userid/group configured.

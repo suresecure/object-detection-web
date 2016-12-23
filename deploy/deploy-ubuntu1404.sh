@@ -1,12 +1,12 @@
 #1 add cuda lib64 to ld library path
 #edit ldconfig-cuda/cuda.conf
 sudo cp ldconfig-cuda/cuda.conf /etc/ld.so.conf.d/
-ldconfig
+sudo ldconfig
 
 #2 add celery worker to /etc/init
 sudo cp celeryobjdetd/init.d/celeryobjdetd /etc/init.d/
 #edit line 12,22,35,36 of service configuration file
-sudo cp celeryobjdetd/default/celeryobjdetd-default /etc/default/celeryobjdetd
+sudo cp celeryobjdetd/default/celeryobjdetd /etc/default/
 #to add run on startup
 sudo update-rc.d celeryobjdetd defaults 
 #to remove run on startup
