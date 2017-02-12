@@ -16,13 +16,13 @@ import numpy as np
 
 if not os.path.exists(config.UPLOAD_FOLDER):
     os.makedirs(config.UPLOAD_FOLDER)
-if not os.path.exists(config.UPLOAD_FOLDER_DETECTED):
-    os.makedirs(config.UPLOAD_FOLDER_DETECTED)
-draw_result = False
-if hasattr(config, 'UPLOAD_FOLDER_DRAW'):
-    draw_result = True
-if draw_result and not os.path.exists(config.UPLOAD_FOLDER_DRAW):
-    os.makedirs(config.UPLOAD_FOLDER_DRAW)
+# if not os.path.exists(config.UPLOAD_FOLDER_DETECTED):
+    # os.makedirs(config.UPLOAD_FOLDER_DETECTED)
+# draw_result = False
+# if hasattr(config, 'UPLOAD_FOLDER_DRAW'):
+    # draw_result = True
+# if draw_result and not os.path.exists(config.UPLOAD_FOLDER_DRAW):
+    # os.makedirs(config.UPLOAD_FOLDER_DRAW)
 
 app = flask.Flask(__name__)
 
@@ -37,6 +37,8 @@ def ObjectDetection(imgstream, secure_filename):
     # def post(self):
         # pass
 MIN_DISK_SIZE = 40*1024*1024*1024
+if hasattr(config, 'MIN_AVAIL_DISK_SIZE'):
+    MIN_AVAIL_DISK_SIZE = config.MIN_AVAIL_DISK_SIZE
 
 def remove_oldest_dirs(dirpath, num):
     # get all entries in the directory w/ stats
@@ -88,7 +90,7 @@ class PersonDetection(flask_restful.Resource):
 
           stat = os.statvfs(config.UPLOAD_FOLDER)
           avail_size = stat.f_bsize*stat.f_bavail
-          if avail_size < MIN_DISK_SIZE:
+          if avail_size < MIN_AVAIL_DISK_SIZE:
               remove_oldest_dirs(config.UPLOAD_FOLDER, 24)
 
           # create dir each hour to store images

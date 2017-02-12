@@ -75,7 +75,7 @@ def detect_image(net, im):
             y = (int)(r[1].item())
             w = (int)(r[2].item())-x
             h = (int)(r[3].item())-y
-            targets.append({'x':x,'y':y,'w':w,'h':h, 'class': ac, 'conf': r[4]})
+            targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac, 'conf': r[4]})
     return targets
 
 def detect_file(file_name, conf_thd, object_detection_net):
@@ -87,7 +87,7 @@ def detect_file(file_name, conf_thd, object_detection_net):
             print 'draw'
             cv2.rectangle(img, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
                           (255,0,0),3)
-            cv2.putText(img, t['class'], (t['x'],t['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+            cv2.putText(img, t['label'], (t['x'],t['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
     cv2.imwrite('detect_file_result.jpg', img)
     cv2.imshow('img', img)
     cv2.waitKey(0)
@@ -97,7 +97,8 @@ def detect_dir(dir_name, result_dir, conf_thd, show_result, store_result, object
         os.makedirs(result_dir)
 
     current_num = 0
-    result_list = []
+    # result_list = []
+    detection_result = {}
     for eachjpg in os.listdir(dir_name):
         if os.path.isfile(os.path.join(dir_name, eachjpg)):
             # and eachjpg.endswith('.jpeg'):
@@ -107,19 +108,20 @@ def detect_dir(dir_name, result_dir, conf_thd, show_result, store_result, object
                 img = cv2.imread(os.path.join(dir_name, eachjpg))
                 targets = detect_image(object_detection_net, img)
 
-                if show_result:
-                    for et in targets:
-                        if et['conf'] > conf_thd:
-                            cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
-                                          (255,0,0))
-                            cv2.putText(img, et['class'], (et['x'],et['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                    cv2.imshow('result', img)
-                    cv2.waitKey(0)
-                if store_result:
-                    for k in status:
-                        cv2.imwrite(os.path.join(result_dirs, eachjpg), img)
+                # if show_result:
+                    # for et in targets:
+                        # if et['conf'] > conf_thd:
+                            # cv2.rectangle(img, (et['x'], et['y']), (et['x']+et['w'], et['y']+et['h']),
+                                          # (255,0,0))
+                            # cv2.putText(img, et['label'], (et['x'],et['y']), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                    # cv2.imshow('result', img)
+                    # cv2.waitKey(0)
+                # if store_result:
+                    # for k in status:
+                        # cv2.imwrite(os.path.join(result_dirs, eachjpg), img)
                 if(len(targets)>0):
-                    result_list.append((eachjpg, targets))
+                    detection_result[eachjpg] = targets
+                    # result_list.append((eachjpg, targets))
                     # print targets
                     # result_txt.write(eachjpg+':\n')
                     # result_txt.write(targets)
@@ -144,12 +146,12 @@ if __name__ == '__main__':
     parser.add_option("-g", "--gpu",
                       dest="gpuid", default=0, type='int',
                       help="gpu id")
-    parser.add_option("-s", "--show",
-                      action="store_true", dest="show_result", default=False,
-                      help="show result")
-    parser.add_option("-t", "--store",
-                      action="store_true", dest="store_result", default=False,
-                      help="store result")
+    # parser.add_option("-s", "--show",
+                      # action="store_true", dest="show_result", default=False,
+                      # help="show result")
+    # parser.add_option("-t", "--store",
+                      # action="store_true", dest="store_result", default=False,
+                      # help="store result")
     # parser.add_option("-d", "--result_dir", dest="result_dir",
                       # help="result directory", metavar="DIR")
     (options, args) = parser.parse_args()
