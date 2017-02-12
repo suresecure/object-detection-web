@@ -1,14 +1,13 @@
 # from __future__ import absolute_import
+import os, sys, time, datetime, shutil
+from stat import S_ISREG, S_ISDIR, ST_CTIME, ST_MODE
 import flask
 import pickle
 import werkzeug
 import celery
 import celery.exceptions
-import os
 import logging
 # import batches
-import time
-import datetime
 import flask_restful
 # import tasks
 import config
@@ -37,6 +36,27 @@ def ObjectDetection(imgstream, secure_filename):
 # class ImageManagement(restful.Resource):
     # def post(self):
         # pass
+MIN_DISK_SIZE = 40*1024*1024*1024
+
+def remove_oldest_dirs(dirpath, num):
+    # get all entries in the directory w/ stats
+    entries = (os.path.join(dirpath, fn) for fn in os.listdir(dirpath))
+    entries = ((os.stat(path), path) for path in entries)
+
+    # entries = ((stat[ST_CTIME], path)
+               # for stat, path in entries if S_ISREG(stat[ST_MODE]))
+
+    # leave only dirs, insert creation date
+    entries = ((stat[ST_CTIME], path)
+               for stat, path in entries if S_ISDIR(stat[ST_MODE]))
+    #NOTE: on Windows `ST_CTIME` is a creation date
+    #  but on Unix it could be something else
+    #NOTE: use `ST_MTIME` to sort by a modification date
+
+    for cdate, path in sorted(entries)[:num]:
+        print 'delete paths: ', path
+        shutil.rmtree(path)
+
 
 # curl -X POST -F image=@hy0.jpg http://localhost:8000/person_detection
 class PersonDetection(flask_restful.Resource):
@@ -66,23 +86,33 @@ class PersonDetection(flask_restful.Resource):
 
           res = ObjectDetection.apply_async(args=[imagestream, filename_], expires=5)
 
-          filename = os.path.join(config.UPLOAD_FOLDER, filename_)
+          stat = os.statvfs(config.UPLOAD_FOLDER)
+          avail_size = stat.f_bsize*stat.f_bavail
+          if avail_size < MIN_DISK_SIZE:
+              remove_oldest_dirs(config.UPLOAD_FOLDER, 24)
+
+          # create dir each hour to store images
+          subdir = datetime.datetime.now().strftime('%Y%m%d%h')
+          storedir = os.path.join(config.UPLOAD_FOLDER, subdir)
+          if not os.path.exists(storedir):
+              os.makedirs(storedir)
+          filename = os.path.join(storedir, filename_)
           with open(filename, "wb") as f:
               f.write(imagestream)
 
           result = res.get()
-          if len(result)>0:
-              filename = os.path.join(config.UPLOAD_FOLDER_DETECTED, filename_)
-              with open(filename, 'w') as f:
-                  pickle.dump(result, f)
+          # if len(result)>0:
+              # filename = os.path.join(config.UPLOAD_FOLDER_DETECTED, filename_)
+              # with open(filename, 'w') as f:
+                  # pickle.dump(result, f)
 
-              if draw_result:
-                  draw_filename = os.path.join(config.UPLOAD_FOLDER_DRAW, filename_)
-                  img_data = cv2.imdecode(np.asarray(bytearray(imagestream), dtype=np.uint8), -1)
-                  for t in result:
-                      cv2.rectangle(img_data, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
-                                        (255,0,0),3)
-                  cv2.imwrite(draw_filename, img_data)
+              # if draw_result:
+                  # draw_filename = os.path.join(config.UPLOAD_FOLDER_DRAW, filename_)
+                  # img_data = cv2.imdecode(np.asarray(bytearray(imagestream), dtype=np.uint8), -1)
+                  # for t in result:
+                      # cv2.rectangle(img_data, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
+                                        # (255,0,0),3)
+                  # cv2.imwrite(draw_filename, img_data)
           return {'targets':result}
         except celery.exceptions.TaskRevokedError:
           print('time is out')

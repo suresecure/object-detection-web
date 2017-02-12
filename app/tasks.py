@@ -75,6 +75,11 @@ def detect_image(net, im):
 
     CONF_THRESH = 0.4
     NMS_THRESH = 0.1
+    active_thds = {}
+    if hasattr(model_config, 'active_thds'):
+        active_thds = model_config.active_thds
+    if hasattr(model_config, 'default_thd'):
+        CONF_THRESH = model_config.default_thd
 
     targets = []
     for ac in model_config.active_classes:
@@ -90,7 +95,10 @@ def detect_image(net, im):
                       target_scores[:, np.newaxis])).astype(np.float32)
         target_keep = nms(target_dets, NMS_THRESH)
         target_dets = target_dets[target_keep, :]
-        target_dets = target_dets[np.where(target_dets[:, -1] >= CONF_THRESH)]
+        conf_thd = CONF_THRESH
+        if ac in active_thds:
+            conf_thd = active_thds[ac]
+        target_dets = target_dets[np.where(target_dets[:, -1] >= conf_thd)]
         for r in target_dets:
             x = (int)(r[0].item())
             y = (int)(r[1].item())

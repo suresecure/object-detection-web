@@ -8,6 +8,7 @@ CLASSES = ('__background__',
            'sheep', 'sofa', 'train', 'tvmonitor')
 active_classes = ['person']
 active_thds = {'person':0.1}
+default_thd = 0.1
 
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
