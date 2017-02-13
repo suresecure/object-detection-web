@@ -36,7 +36,7 @@ def ObjectDetection(imgstream, secure_filename):
 # class ImageManagement(restful.Resource):
     # def post(self):
         # pass
-MIN_DISK_SIZE = 40*1024*1024*1024
+MIN_AVAIL_DISK_SIZE = 40*1024*1024*1024
 if hasattr(config, 'MIN_AVAIL_DISK_SIZE'):
     MIN_AVAIL_DISK_SIZE = config.MIN_AVAIL_DISK_SIZE
 
@@ -94,7 +94,7 @@ class PersonDetection(flask_restful.Resource):
               remove_oldest_dirs(config.UPLOAD_FOLDER, 24)
 
           # create dir each hour to store images
-          subdir = datetime.datetime.now().strftime('%Y%m%d%h')
+          subdir = datetime.datetime.now().strftime('%Y%m%d%H')
           storedir = os.path.join(config.UPLOAD_FOLDER, subdir)
           if not os.path.exists(storedir):
               os.makedirs(storedir)
