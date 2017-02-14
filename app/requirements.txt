@@ -1,0 +1,5 @@
+celery == 3.1.15
+apscheduler
+Flask-SQLAlchemy
+gunicorn
+gevent
