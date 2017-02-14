@@ -9,6 +9,12 @@ CLASSES = ('__background__',
            'sheep', 'sofa', 'train', 'tvmonitor',
            'call', 'sunglasses', 'mask', 'hat', 'helmet', 'glasses')
 active_classes = ['call', 'sunglasses', 'hat', 'helmet', 'mask']
+#for analog cameras
+active_thds = {'call':0.1, 'sunglasses':0.45, 'hat': 0.3, 'mask':0.1, 'helmet': 0.35}
+default_thd = 0.1
+#for digital cameras
+#active_thds = {'call':0.1, 'sunglasses':0.45, 'hat': 0.3, 'mask':0.1, 'helmet': 0.35}
+#default_thd = 0.1
 
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side

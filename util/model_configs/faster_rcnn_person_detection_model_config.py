@@ -7,7 +7,11 @@ CLASSES = ('__background__',
            'cow', 'diningtable', 'dog', 'horse',
            'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor')
+#haoyun or 180/360 degrees of hongshi
 active_classes = ['person']
+active_thds = ['person': 0.8]
+default_thd = 0.1
+#nms = 0.3
 
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
@@ -16,8 +20,6 @@ TEST_SCALES = (600,)
 TEST_RPN_PRE_NMS_TOP_N = 6000
 ## Number of top scoring boxes to keep after applying NMS to RPN proposals
 TEST_RPN_POST_NMS_TOP_N = 300
-# thd = 0.8
-# xintiandi for bank of changsha cash store, nms=0.3
 
 # prototxt = "/home/mythxcq/models/faster-rcnn-person-detection-model/test.prototxt"
 # caffemodel = "/home/mythxcq/models/faster-rcnn-person-detection-model/vgg16_faster_rcnn_21c_hs.caffemodel"
