@@ -20,6 +20,41 @@ import numpy as np
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.gevent import GeventScheduler
 
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True)
+    email = db.Column(db.String(120), unique=True)
+
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+    def __repr__(self):
+        return '<User %r>' % self.username
+
+db.create_all()
+
+user = User('2o', '2o@sina.com')
+db.session.add(user)
+# user = User('3o', 'wo@sina.com')
+# db.session.add(user)
+try:
+    db.session.commit()
+except Exception, ex:
+    db.session.rollback()
+    print ex
+
+users = User.query.all()
+for user in users:
+    print user.username, user.email
+
+
 MIN_AVAIL_DISK_SIZE = 40 * 1024 * 1024 * 1024
 if hasattr(config, 'MIN_AVAIL_DISK_SIZE'):
     MIN_AVAIL_DISK_SIZE = config.MIN_AVAIL_DISK_SIZE
@@ -78,7 +113,7 @@ if not os.path.exists(config.UPLOAD_FOLDER):
 # if draw_result and not os.path.exists(config.UPLOAD_FOLDER_DRAW):
     # os.makedirs(config.UPLOAD_FOLDER_DRAW)
 
-app = flask.Flask(__name__)
+# app = flask.Flask(__name__)
 
 import settings
 the_celery = celery.Celery('tasks')
