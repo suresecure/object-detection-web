@@ -22,10 +22,20 @@ from apscheduler.schedulers.gevent import GeventScheduler
 
 from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
+
+class AccessLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    return_result = db.Column(db.String(120))
+
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+    def __repr__(self):
+        return '<User %r>' % self.username
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
