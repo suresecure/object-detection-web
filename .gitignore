@@ -11,3 +11,4 @@ settings.py
 model_config.py
 device_count.txt
 app/cudautil/get_cuda_device_count
+test.db

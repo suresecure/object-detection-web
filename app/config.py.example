@@ -6,3 +6,5 @@ UPLOAD_FOLDER_DETECTED = '/tmp/caffe_demos_uploads_detected'
 UPLOAD_FOLDER_DRAW = '/tmp/caffe_demos_uploads_draw'
 
 MIN_AVAIL_DISK_SPACE = 40*1024*1024*1024
+MAX_IMAGE_STORE_DAYS = 7
+MAX_ACCESS_LOGS_STORE_DAYS = 14
