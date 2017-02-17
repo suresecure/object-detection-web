@@ -18,10 +18,6 @@ import config
 import cv2
 import numpy as np
 from flask_apscheduler import APScheduler
-# from apscheduler.schedulers.background import BackgroundScheduler
-# from apscheduler.schedulers.gevent import GeventScheduler
-# from apscheduler.schedulers.blocking import BlockingScheduler
-
 from flask_sqlalchemy import SQLAlchemy
 
 MIN_AVAIL_DISK_SIZE = 1000 * 1024 * 1024 * 1024
@@ -59,11 +55,13 @@ def remove_history_images_uploaded():
     #NOTE: on Windows `ST_CTIME` is a creation date
     #  but on Unix it could be something else
     #NOTE: use `ST_MTIME` to sort by a modification date
-    oldest_datetime = datetime.datetime.now() - datetime.timedelta(days = MAX_IMAGE_STORE_DAYS)
+    oldest_datetime = datetime.datetime.now(
+    ) - datetime.timedelta(days=MAX_IMAGE_STORE_DAYS)
     for cdate, path in sorted(entries):
         try:
             print path
-            created_datetime = datetime.datetime.strptime(os.path.basename(path), '%Y%m%d%H')
+            created_datetime = datetime.datetime.strptime(
+                os.path.basename(path), '%Y%m%d%H')
             if created_datetime < oldest_datetime:
                 print 'rm too old image dir: ', path
                 shutil.rmtree(path)
@@ -81,6 +79,7 @@ def remove_history_images_uploaded():
         except Exception, ex:
             print ex
 
+
 def remove_history_access_logs():
     try:
         datetime_ndays_ago = datetime.datetime.now(
@@ -89,11 +88,17 @@ def remove_history_access_logs():
             AccessLog.created_datetime < datetime_ndays_ago)
         access_logs.delete(synchronize_session='fetch')
         db.session.commit()
+
+        # access_logs = AccessLog.query.all()
+        # print 'after remove access logs'
+        # for al in access_logs:
+            # print al.return_code, al.error_message, al.created_datetime
     except Exception, ex:
         print ex
         db.session.rollback()
         db.drop_all()
         db.create_all()
+
 
 def remove_history_data():
     print 'remove history images and access logs'
@@ -101,14 +106,15 @@ def remove_history_data():
     remove_history_access_logs()
 
 app = flask.Flask(__name__)
+
 class FlaskConfig(object):
     JOBS = [
         {
             'id': 'remove_history_data',
             'func': 'app:remove_history_data',
             # 'args': (1, 2),
-            'trigger': 'interval',
-            'seconds': 1
+            'trigger': 'cron',
+            'hour': 0
         }
     ]
     SCHEDULER_API_ENABLED = True
@@ -134,24 +140,29 @@ class AccessLog(db.Model):
 
 db.create_all()
 
+# def test_init_database():
+    # al = AccessLog()
+    # al.return_code = 1
+    # al.error_message = 'yes'
+    # db.session.add(al)
+    # al = AccessLog()
+    # db.session.add(al)
+    # al = AccessLog()
+    # al.created_datetime = datetime.datetime.now() - datetime.timedelta(days=20)
+    # db.session.add(al)
+    # db.session.commit()
+    # access_logs = AccessLog.query.all()
+    # print 'all access logs'
+    # for al in access_logs:
+        # print al.return_code, al.error_message, al.created_datetime
+
+# test_init_database()
+
 scheduler = APScheduler()
 # it is also possible to enable the API directly
 # scheduler.api_enabled = True
 scheduler.init_app(app)
 scheduler.start()
-# sched = BackgroundScheduler()
-# sched = GeventScheduler()
-# sched = BlockingScheduler()
-# delete oldest images and access logs every day
-
-
-# @sched.scheduled_job('cron', hour=0)
-# @sched.scheduled_job('cron', second=0)
-# def scheduled_job():
-    # remove_history_images_uploaded()
-    # remove_history_access_logs()
-    # print 'remove history images and access logs'
-
 
 import settings
 the_celery = celery.Celery('tasks')
@@ -161,94 +172,101 @@ the_celery.config_from_object(settings)
 def ObjectDetection(imgstream, secure_filename):
     pass
 
-# class ImageManagement(restful.Resource):
-    # def post(self):
-    # pass
-
 # curl -X POST -F image=@hy0.jpg http://localhost:8000/person_detection
+def object_detection():
+    detection_result = {}
+    return_code = -1
+    try:
+      # print len(flask.request.files)
+      imagefile = flask.request.files['image']
+      imagestream = imagefile.read()
+
+      filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
+          werkzeug.secure_filename(imagefile.filename)
+
+      res = ObjectDetection.apply_async(
+          args=[imagestream, filename_], expires=5)
+
+      # create dir each hour to store images
+      subdir = datetime.datetime.now().strftime('%Y%m%d%H')
+      storedir = os.path.join(config.UPLOAD_FOLDER, subdir)
+      if not os.path.exists(storedir):
+          os.makedirs(storedir)
+      filename = os.path.join(storedir, filename_)
+      with open(filename, "wb") as f:
+          f.write(imagestream)
+
+      result = res.get()
+      # result = 1
+
+      # if len(result)>0:
+      # filename = os.path.join(config.UPLOAD_FOLDER_DETECTED, filename_)
+      # with open(filename, 'w') as f:
+      # pickle.dump(result, f)
+
+      # if draw_result:
+      # draw_filename = os.path.join(config.UPLOAD_FOLDER_DRAW, filename_)
+      # img_data = cv2.imdecode(np.asarray(bytearray(imagestream), dtype=np.uint8), -1)
+      # for t in result:
+      # cv2.rectangle(img_data, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
+      # (255,0,0),3)
+      # cv2.imwrite(draw_filename, img_data)
+      detection_result = {'targets': result}
+    except celery.exceptions.TaskRevokedError:
+      print('time is out')
+      return_code = 0
+      detection_result = {'error': 'time is out'}
+    except AttributeError:
+      print('image is invalid')
+      return_code = 1
+      detection_result = {'error': 'iamge is invalid'}
+    except Exception, ex:
+      print(ex)
+      return_code = 2
+      detection_result = {'error': str(ex)}
+
+    try:
+      access_log = AccessLog()
+      access_log.return_code = return_code
+      db.session.add(access_log)
+      db.session.commit()
+    except Exception, ex:
+        print ex
+        db.session.rollback()
+        db.session.commit()
+        db.drop_all()
+        db.create_all()
+
+    return detection_result
+
+
+class ObjectDetection(flask_restful.Resource):
+
+    def post(self):
+        return object_detection()
+
+
 class PersonDetection(flask_restful.Resource):
 
     def post(self):
-        detection_result = {}
-        return_code = -1
-        try:
-          # print len(flask.request.files)
-          imagefile = flask.request.files['image']
-          imagestream = imagefile.read()
-
-          filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
-              werkzeug.secure_filename(imagefile.filename)
-
-          # res = ObjectDetection.apply_async(
-              # args=[imagestream, filename_], expires=5)
-
-          # create dir each hour to store images
-          subdir = datetime.datetime.now().strftime('%Y%m%d%H')
-          storedir = os.path.join(config.UPLOAD_FOLDER, subdir)
-          if not os.path.exists(storedir):
-              os.makedirs(storedir)
-          filename = os.path.join(storedir, filename_)
-          with open(filename, "wb") as f:
-              f.write(imagestream)
-
-          # result = res.get()
-          result = 1
-
-          # if len(result)>0:
-          # filename = os.path.join(config.UPLOAD_FOLDER_DETECTED, filename_)
-          # with open(filename, 'w') as f:
-          # pickle.dump(result, f)
-
-          # if draw_result:
-          # draw_filename = os.path.join(config.UPLOAD_FOLDER_DRAW, filename_)
-          # img_data = cv2.imdecode(np.asarray(bytearray(imagestream), dtype=np.uint8), -1)
-          # for t in result:
-          # cv2.rectangle(img_data, (t['x'],t['y']), (t['x']+t['w'],t['y']+t['h']),
-          # (255,0,0),3)
-          # cv2.imwrite(draw_filename, img_data)
-          detection_result = {'targets': result}
-        except celery.exceptions.TaskRevokedError:
-          print('time is out')
-          return_code = 0
-          detection_result = {'error': 'time is out'}
-        except AttributeError:
-          print('image is invalid')
-          return_code = 1
-          detection_result = {'error': 'iamge is invalid'}
-        except Exception, ex:
-          print(ex)
-          return_code = 2
-          detection_result = {'error': str(ex)}
-
-        try:
-          access_log = AccessLog()
-          access_log.return_code = return_code
-          db.session.add(access_log)
-          db.session.commit()
-        except Exception, ex:
-            print ex
-            db.session.rollback()
-            db.session.commit()
-            db.drop_all()
-            db.create_all()
-
-        return detection_result
+        return object_detection()
 
 
 class Stat(flask_restful.Resource):
 
     def post(self):
         try:
+            print flask.request.args
             # datetime string format: 20170210213021
             # xxxx(year)xx(month)xx(day)xx(24hour)xx(minute)xx(second)
             start_datetime = datetime.datetime.strptime(
-                request.args.get('start_datetime'), "%Y%m%d%H%M%S")
-            end_datettime = datetime.datetime.strptime(
-                request.args.get('end_datetime'), "%Y%m%d%H%M%S")
+                flask.request.args.get('start_datetime'), "%Y%m%d%H%M%S")
+            end_datetime = datetime.datetime.strptime(
+                flask.request.args.get('end_datetime'), "%Y%m%d%H%M%S")
             access_logs = AccessLog.query.filter(
                 AccessLog.created_datetime.between(start_datetime, end_datetime))
             # success_access_logs = access_logs.filter(AccessLog.return_code == -1)
-            tatal_logs_num = 0
+            total_logs_num = 0
             success_logs_num = 0
             # filter in memory, instead of querying database again
             for access_log in access_logs:
@@ -256,17 +274,17 @@ class Stat(flask_restful.Resource):
                 if access_log.return_code == -1:
                     success_logs_num += 1
 
-            return{"total_calls": total_logs_num, 'sucess_calls': sucess_logs_num}
+            return{"total_calls": total_logs_num, 'sucess_calls': success_logs_num}
         except Exception, ex:
             print ex
             db.session.rollback()
             db.session.commit()
             # recreate tables
-            db.session.drop_all()
-            db.session.create_all()
+            db.drop_all()
+            db.create_all()
             return {'error', str(ex)}
 
 api = flask_restful.Api(app)
 api.add_resource(PersonDetection, '/person_detection')
+api.add_resource(ObjectDetection, '/object_detection')
 api.add_resource(Stat, '/stat')
-
