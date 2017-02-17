@@ -121,8 +121,8 @@ def detect_image(net, im):
     # CONF_THRESH = 0.8
     # vis_person_detections(im, person_dets, thresh=CONF_THRESH)
 
-@the_celery.task(name="tasks.ObjectDetection", queue="important")
-def ObjectDetection(imgstream, secure_filename):
+@the_celery.task(name="tasks.object_detection_task", queue="important")
+def object_detection_task(imgstream, secure_filename):
 
     # targets = []
     img = cv2.imdecode(np.asarray(bytearray(imgstream), dtype=np.uint8), -1)

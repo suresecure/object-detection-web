@@ -168,12 +168,13 @@ import settings
 the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
 
-@the_celery.task(name="tasks.ObjectDetection", queue="important")
-def ObjectDetection(imgstream, secure_filename):
+@the_celery.task(name="tasks.object_detection_task", queue="important")
+def object_detection_task(imgstream, secure_filename):
     pass
 
 # curl -X POST -F image=@hy0.jpg http://localhost:8000/person_detection
 def object_detection():
+    print flask.request.files
     detection_result = {}
     return_code = -1
     try:
@@ -184,7 +185,7 @@ def object_detection():
       filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
           werkzeug.secure_filename(imagefile.filename)
 
-      res = ObjectDetection.apply_async(
+      res = object_detection_task.apply_async(
           args=[imagestream, filename_], expires=5)
 
       # create dir each hour to store images
@@ -216,13 +217,9 @@ def object_detection():
       print('time is out')
       return_code = 0
       detection_result = {'error': 'time is out'}
-    except AttributeError:
-      print('image is invalid')
-      return_code = 1
-      detection_result = {'error': 'iamge is invalid'}
     except Exception, ex:
       print(ex)
-      return_code = 2
+      return_code = 1
       detection_result = {'error': str(ex)}
 
     try:
