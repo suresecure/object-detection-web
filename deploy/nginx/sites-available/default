@@ -17,7 +17,7 @@
 # Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
 ##
 server {
-  listen 80;
+  listen 8080;
   server_name _; # 这是HOST机器的外部域名，用地址也行
 	root /usr/share/nginx/html;
   index index.html index.htm;

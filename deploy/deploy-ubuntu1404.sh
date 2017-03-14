@@ -16,6 +16,10 @@ sudo update-rc.d celeryobjdetd defaults
 #edit line 9 of gunicorn-objdet/objdet-gunicorn
 sudo cp gunicorn-upstart /etc/init/
 
+#3 tornado auto start using upstart
+#edit line 9 of tornado-upstart/objdet-tornado.conf
+sudo cp tornado-upstart/objdet-tornado.conf /etc/init
+
 #4 install and config nginx
 sudo apt-get install nginx
 sudo cp nginx/sites-available/default /etc/nginx/sites-available/

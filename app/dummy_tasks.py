@@ -11,6 +11,6 @@ the_celery.config_from_object(settings)
 @the_celery.task(name="tasks.object_detection_task", queue="important")
 def object_detection_task(imgstream, secure_filename):
     print 'get task'
-    # time.sleep(1)
+    time.sleep(5)
     return 1
 

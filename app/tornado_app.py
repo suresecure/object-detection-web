@@ -1,29 +1,42 @@
 import tornado.ioloop
 import tornado.web
+import tornado.httpclient
+# import tornado.gen
+# import tcelery
+from tornado import gen, web
+from apscheduler.schedulers.tornado import TornadoScheduler
+from stat import S_ISREG, S_ISDIR, ST_CTIME, ST_MODE
 
+import os
+import shutil
 import werkzeug
 import logging
 import celery
 import celery.exceptions
 import settings
+import config
+import time
 
 import datetime
-from sqlalchemy import create_engine
-engine = create_engine('sqlite:///:memory:', echo=True)
-from sqlalchemy.orm import sessionmaker
-Session = sessionmaker(bind=engine)
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
-from sqlalchemy import Column, DateTime, Integer, String
-class AccessLog(Base):
-    __tablename__ = 'access_logs'
-    id = Column(Integer, primary_key=True)
-    created_datetime = Column(DateTime, default=datetime.datetime.now, index=True)
-    return_code = Column(Integer, default=-1, index=True)
-    error_message = Column(String, default='')
-    def __repr__(self):
-       return "<AccessLog(created_datetime='%s', return_code='%d', error_message='%s')>" % (self.created_datetime, self.return_code, self.error_message)
-Base.metadata.create_all(engine)
+# from sqlalchemy import create_engine
+# engine = create_engine('sqlite:///test.sqlite.db', echo=False)
+# from sqlalchemy.orm import sessionmaker
+# Session = sessionmaker(bind=engine)
+# from sqlalchemy.ext.declarative import declarative_base
+# Base = declarative_base()
+# from sqlalchemy import Column, DateTime, Integer, String
+
+# class AccessLog(Base):
+    # __tablename__ = 'access_logs'
+    # id = Column(Integer, primary_key=True)
+    # created_datetime = Column(
+        # DateTime, default=datetime.datetime.now, index=True)
+    # return_code = Column(Integer, default=-1, index=True)
+    # error_message = Column(String, default='')
+
+    # def __repr__(self):
+       # return "<AccessLog(created_datetime='%s', return_code='%d', error_message='%s')>" % (self.created_datetime, self.return_code, self.error_message)
+# Base.metadata.create_all(engine)
 
 the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
@@ -32,51 +45,72 @@ the_celery.config_from_object(settings)
 def object_detection_task(imgstream, secure_filename):
     pass
 
+# tcelery.setup_nonblocking_producer()
+# request_count = 0
+# response_count = 0
+
 class ObjectDetectionHandler(tornado.web.RequestHandler):
+    @gen.coroutine
     def post(self):
         try:
-            access_log = AccessLog()
+            # access_log = AccessLog()
 
             image_bytestr = self.request.files['image'][0].body
             filename = self.request.files['image'][0].filename
-            detection_result = {}
-            #return_code = -1
             imagestream = image_bytestr
             filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
                 werkzeug.secure_filename(filename)
 
-            res = yield object_detection_task.apply_async(
-                args=[imagestream, filename_], expires=5)
+            # print 'yield task'
+            # res = yield gen.Task(object_detection_task.apply_async, args=[imagestream, filename_], expires=5)
+            # print 'after yield task'
 
-            store_upload_image(imagestream, filename_):
+            # print 'send task start', local_count
+            res = object_detection_task.apply_async(
+                args=[imagestream, filename_], expires=2)
+            # print 'send task over', local_count
+            yield gen.sleep(1)
+            # store_upload_image(imagestream, filename_)
 
-            result = res.get()
-
-            self.write({'targets': result})
-        except celery.exceptions.TaskRevokedError:
-            print('time is out')
-            access_log.return_code = 0
-            access_log.error_message = "time is out"
-            self.write({'error': 'time is out'})
+            result = res.result
+            if result is None:
+                res.revoke()
+                # res.forget()
+                self.write({'error': 'time is out'})
+            elif result isinstance celery.exceptions.TaskRevokedException:
+                self.write({'error': 'time is out'})
+            elif result isinstance Exception:
+                self.write({'error': str(result)})
+            else:
+                self.write({'targets': result})
+            # print '2', local_count
+        # except celery.exceptions.TaskRevokedError:
+            # print('time is out')
+            # # access_log.return_code = 0
+            # # access_log.error_message = "time is out"
+            # self.write({'error': 'time is out'})
         except Exception, ex:
             print(ex)
-            access_log.return_code = 1
-            access_log.error_message = str(ex)
+            # access_log.return_code = 1
+            # access_log.error_message = str(ex)
             self.write({'error': str(ex)})
         finally:
             pass
+            # response_count += 1
 
-        try:
-            session = Session()
-            session.add(access_log)
-            session.commit()
-        except Exception, ex:
-            print(ex)
-            session.rollback()
-        finally:
-            session.close()
+        # try:
+            # session = Session()
+            # session.add(access_log)
+            # session.commit()
+        # except Exception, ex:
+            # print(ex)
+            # session.rollback()
+        # finally:
+            # session.close()
 
+        # print '3', local_count
         self.finish()
+        # print '4', local_count
 
 MIN_AVAIL_DISK_SIZE = 1000 * 1024 * 1024 * 1024
 if hasattr(config, 'MIN_AVAIL_DISK_SIZE'):
@@ -138,17 +172,27 @@ def remove_history_images_uploaded():
             print ex
 
 
-def remove_history_access_logs(session):
-    datetime_ndays_ago = datetime.datetime.now(
-    ) - datetime.timedelta(days=MAX_ACCESS_LOGS_STORE_DAYS)
-    access_logs = session.query((AccessLog).filter(
-        AccessLog.created_datetime < datetime_ndays_ago)
-        access_logs.delete(synchronize_session='fetch')
+# def remove_history_access_logs():
+    # # sqlalchemy objects created in a thread can only be used in that same
+    # # thread
+    # try:
+        # local_engine = create_engine('sqlite:///test.sqlite.db', echo=False)
+        # LocalSession = sessionmaker(bind=local_engine)
+        # session = LocalSession()
+        # datetime_ndays_ago = datetime.datetime.now(
+        # ) - datetime.timedelta(days=MAX_ACCESS_LOGS_STORE_DAYS)
+        # access_logs = session.query(AccessLog).filter(
+            # AccessLog.created_datetime < datetime_ndays_ago)
+        # access_logs.delete(synchronize_session='fetch')
+        # session.commit()
+    # except Exception, ex:
+        # print ex
 
 def remove_history_data():
     print 'remove history images and access logs'
     remove_history_images_uploaded()
-    remove_history_access_logs()
+    # remove_history_access_logs()
+
 
 def store_upload_image(imagestream, filename):
     # create dir each hour to store images
@@ -160,12 +204,17 @@ def store_upload_image(imagestream, filename):
     with open(filename, "wb") as f:
         f.write(imagestream)
 
+scheduler = TornadoScheduler()
+# scheduler.add_job(remove_history_data, 'date')
+scheduler.add_job(remove_history_data, 'interval', hours=1)
+scheduler.start()
 
 def make_app():
     return tornado.web.Application([
         (r"/person_detection", ObjectDetectionHandler),
         (r"/object_detection", ObjectDetectionHandler)
     ])
+
 
 if __name__ == "__main__":
     app = make_app()
