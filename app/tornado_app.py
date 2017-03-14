@@ -77,7 +77,7 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
                 res.revoke()
                 # res.forget()
                 self.write({'error': 'time is out'})
-            elif isinstance(result, celery.exceptions.TaskRevokedException):
+            elif isinstance(result, celery.exceptions.TaskRevokedError):
                 self.write({'error': 'time is out'})
             elif isinstance(result, Exception):
                 self.write({'error': str(result)})
