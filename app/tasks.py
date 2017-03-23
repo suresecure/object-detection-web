@@ -5,6 +5,7 @@ import celery
 import logging
 import time
 import model_config
+import hs_fisheye
 
 the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
@@ -59,12 +60,15 @@ CLASSES = model_config.CLASSES
            # 'motorbike', 'person', 'pottedplant',
            # 'sheep', 'sofa', 'train', 'tvmonitor')
 
-def detect_image(net, im):
+def detect_image(net, im, fisheye_type):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Detect all object classes and regress object bounds
     timer = Timer()
     timer.tic()
+    undist_type = int(fisheye_type)
+    if undist_type != -1:
+        im = hs_fisheye.image_undistortion(im, undist_type)
     scores, boxes = im_detect(net, im)
     timer.toc()
     print(str(current_process().index)+' Detection took {:.3f}s for '
@@ -104,6 +108,8 @@ def detect_image(net, im):
             y = (int)(r[1].item())
             w = (int)(r[2].item())-x
             h = (int)(r[3].item())-y
+            if undist_type != -1:
+                (x,y,w,h) = hs_fisheye.point_projection(x,y,w,h, undist_type)
             targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac, 'conf': int(100.0*r[4])})
     return targets
 

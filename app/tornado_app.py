@@ -42,7 +42,7 @@ the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
 
 @the_celery.task(name="tasks.object_detection_task", queue="important")
-def object_detection_task(imgstream, secure_filename):
+def object_detection_task(imgstream, secure_filename, fisheye_type):
     pass
 
 # tcelery.setup_nonblocking_producer()
@@ -53,6 +53,8 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def post(self):
         try:
+            fisheye_type = self.get_argument('fisheye_type', default='-1')
+            device_id = self.get_argument('device_id', default='')
             # access_log = AccessLog()
 
             image_bytestr = self.request.files['image'][0].body
@@ -67,7 +69,7 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
 
             # print 'send task start', local_count
             res = object_detection_task.apply_async(
-                args=[imagestream, filename_], expires=2)
+                args=[imagestream, filename_, fisheye_type], expires=2)
             # print 'send task over', local_count
             yield gen.sleep(1)
             # store_upload_image(imagestream, filename_)
