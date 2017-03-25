@@ -9,7 +9,7 @@ the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
 
 @the_celery.task(name="tasks.object_detection_task", queue="important")
-def object_detection_task(imgstream, secure_filename, fisheye_type):
+def object_detection_task(imgstream, secure_filename, fisheye_type, last_image_file, last_targets):
     print fisheye_type
     print 'get task'
     time.sleep(5)

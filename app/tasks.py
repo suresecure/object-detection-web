@@ -60,7 +60,25 @@ CLASSES = model_config.CLASSES
            # 'motorbike', 'person', 'pottedplant',
            # 'sheep', 'sofa', 'train', 'tvmonitor')
 
-def detect_image(net, im, fisheye_type):
+def intersection(a,b):
+  x = max(a[0], b[0])
+  y = max(a[1], b[1])
+  w = min(a[0]+a[2], b[0]+b[2]) - x
+  h = min(a[1]+a[3], b[1]+b[3]) - y
+  if w<0 or h<0: return () # or (0,0,0,0) ?
+  return (x, y, w, h)
+
+def compare_img(img, last_img, inter_area):
+    sad = np.sum(np.absolute(img[inter_area[1]:inter_area[1]+inter_area[3],
+                           inter_area[0]:inter_area[0]+inter_area[2]] -
+                       last_img[inter_area[1]:inter_area[1]+inter_area[3],
+                           inter_area[0]:inter_area[0]+inter_area[2]]))
+    if sad/(inter_area[2]*inter_area[3]) < 10:
+        return True
+    else:
+        return False
+
+def detect_image(net, im, fisheye_type, last_image_file, last_targets):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Detect all object classes and regress object bounds
@@ -111,35 +129,40 @@ def detect_image(net, im, fisheye_type):
             if undist_type != -1:
                 (x,y,w,h) = hs_fisheye.point_projection(x,y,w,h, undist_type)
             targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac, 'conf': int(100.0*r[4])})
-    return targets
 
-    # person_idx = CLASSES.index('person')
+    if last_image_file is not None and last_targets is not None:
+        #load last image file
+        try:
+            last_img = cv2.imread(last_image_file)
+            if last_img.shape != im.shape:
+                filtered_targets = targets
+            else:
+                filtered_targets = []
+                for t in targets:
+                    filtered = False
+                    for lt in last_targets:
+                        t_rect = (t['x'], t['y'], t['w'], t['h'])
+                        lt_rect = (lt['x'], lt['y'], lt['w'], lt['h'])
+                        inter_rect = intersection(t, lt)
+                        inter_area = inter_rect[2]*inter_rect[3]
+                        if (inter_area>(t_rect[2]*t_rect[3]*0.95) and
+                            inter_area>(lt_rect[2]*lt_rect[3]*0.95)):
+                            filtered = compare_img(im, last_img, inter_area)
+                            # only one possible intersected target
+                            break
 
-    # person_boxes = boxes[:, 4*person_idx:4*(person_idx + 1)]
-    # person_scores = scores[:, person_idx]
-    # person_dets = np.hstack((person_boxes,
-                      # person_scores[:, np.newaxis])).astype(np.float32)
-    # person_keep = nms(person_dets, NMS_THRESH)
-    # person_dets = person_dets[person_keep, :]
-    # # inds = np.where(dets[:, -1] >= CONF_THRESH)[0]
-    # person_dets = person_dets[np.where(person_dets[:, -1] >= CONF_THRESH)]
-    # return person_dets
-    # CONF_THRESH = 0.8
-    # vis_person_detections(im, person_dets, thresh=CONF_THRESH)
+                    if not filtered:
+                        filtered_targets.append(t)
+
+        except Exception, ex:
+            print(ex)
+            filtered_targets = targets
+        finally:
+            pass
+
+    return targets, filtered_targets
 
 @the_celery.task(name="tasks.object_detection_task", queue="important")
-def object_detection_task(imgstream, secure_filename):
-
-    # targets = []
+def object_detection_task(imgstream, secure_filename, fisheye_type, last_image_file, last_targets):
     img = cv2.imdecode(np.asarray(bytearray(imgstream), dtype=np.uint8), -1)
-    return detect_image(person_detection_net, img)
-    # result = detect_image(person_detection_net, img)
-
-    # for r in result:
-        # x = (int)(r[0].item())
-        # y = (int)(r[1].item())
-        # w = (int)(r[2].item())-x
-        # h = (int)(r[3].item())-y
-        # targets.append({'x':x,'y':y,'w':w,'h':h})
-
-    # return result
+    return detect_image(person_detection_net, img, fisheye_type, last_image_file, last_targets)

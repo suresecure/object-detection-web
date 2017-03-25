@@ -49,10 +49,13 @@ def object_detection_task(imgstream, secure_filename, fisheye_type):
 # request_count = 0
 # response_count = 0
 
+device_last_access_dict = {}
+
 class ObjectDetectionHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def post(self):
         try:
+            global device_last_access_dict
             fisheye_type = self.get_argument('fisheye_type', default='-1')
             device_id = self.get_argument('device_id', default='')
             # access_log = AccessLog()
@@ -63,16 +66,22 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
             filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
                 werkzeug.secure_filename(filename)
 
-            # print 'yield task'
-            # res = yield gen.Task(object_detection_task.apply_async, args=[imagestream, filename_], expires=5)
-            # print 'after yield task'
+            if device_last_access_dict.has_key(device_id):
+                last_datetime, last_image_file, last_targets = device_last_access_dict[device_id]
+                time_delta = datetime.datetime.now() - last_datetime
+                if time_delta.seconds > 10*60:
+                    device_last_access_dict.pop(device_id, None)
+                    last_image_file = None
+                    last_targets = None
+            else:
+                last_image_file = None
+                last_targets = None
 
-            # print 'send task start', local_count
             res = object_detection_task.apply_async(
-                args=[imagestream, filename_, fisheye_type], expires=2)
+                args=[imagestream, filename_, fisheye_type, last_image_file, last_targets], expires=2)
             # print 'send task over', local_count
+            store_file_name = store_upload_image(imagestream, filename_)
             yield gen.sleep(1)
-            # store_upload_image(imagestream, filename_)
 
             result = res.result
             if result is None:
@@ -84,7 +93,10 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
             elif isinstance(result, Exception):
                 self.write({'error': str(result)})
             else:
-                self.write({'targets': result})
+                # self.write({'targets': result})
+                origin_targets, filtered_targets = result
+                self.write({'targets': filtered_targets})
+                device_last_access_dict[device_id] = (datetime.datetime.now(), store_file_name, origin_targets)
             # print '2', local_count
         # except celery.exceptions.TaskRevokedError:
             # print('time is out')
@@ -205,6 +217,7 @@ def store_upload_image(imagestream, filename):
     filename = os.path.join(storedir, filename)
     with open(filename, "wb") as f:
         f.write(imagestream)
+    return filename
 
 scheduler = TornadoScheduler()
 # scheduler.add_job(remove_history_data, 'date')
