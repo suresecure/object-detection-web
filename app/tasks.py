@@ -6,6 +6,7 @@ import logging
 import time
 import model_config
 import hs_fisheye
+import traceback
 
 the_celery = celery.Celery('tasks')
 the_celery.config_from_object(settings)
@@ -14,8 +15,8 @@ import _init_paths
 from utils.timer import Timer
 os.environ['GLOG_minloglevel'] = '2'
 import numpy as np
-import matplotlib 
-matplotlib.use('Agg') 
+import matplotlib
+matplotlib.use('Agg')
 import cv2
 import caffe
 from fast_rcnn.config import cfg
@@ -67,7 +68,7 @@ def intersection(a,b):
   y = max(a[1], b[1])
   w = min(a[0]+a[2], b[0]+b[2]) - x
   h = min(a[1]+a[3], b[1]+b[3]) - y
-  if w<0 or h<0: return () # or (0,0,0,0) ?
+  if w<0 or h<0: return (0,0,0,0)
   return (x, y, w, h)
 
 def compare_img(img, last_img, inter_rect):
@@ -151,6 +152,7 @@ def detect_image(net, im, fisheye_type, last_image_file, last_targets):
                         if (inter_area>(t_rect[2]*t_rect[3]*0.95) and
                             inter_area>(lt_rect[2]*lt_rect[3]*0.95)):
                             filtered = compare_img(origin_im, last_img, inter_rect)
+                            # print 'compare img', filtered
                             # only one possible intersected target
                             break
 
@@ -158,6 +160,7 @@ def detect_image(net, im, fisheye_type, last_image_file, last_targets):
                         filtered_targets.append(t)
 
         except Exception, ex:
+            traceback.print_exc()
             print(ex)
             filtered_targets = targets
         finally:
