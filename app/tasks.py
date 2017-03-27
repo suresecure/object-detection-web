@@ -14,6 +14,8 @@ import _init_paths
 from utils.timer import Timer
 os.environ['GLOG_minloglevel'] = '2'
 import numpy as np
+import matplotlib 
+matplotlib.use('Agg') 
 import cv2
 import caffe
 from fast_rcnn.config import cfg
