@@ -68,12 +68,12 @@ def intersection(a,b):
   if w<0 or h<0: return () # or (0,0,0,0) ?
   return (x, y, w, h)
 
-def compare_img(img, last_img, inter_area):
-    sad = np.sum(np.absolute(img[inter_area[1]:inter_area[1]+inter_area[3],
-                           inter_area[0]:inter_area[0]+inter_area[2]] -
-                       last_img[inter_area[1]:inter_area[1]+inter_area[3],
-                           inter_area[0]:inter_area[0]+inter_area[2]]))
-    if sad/(inter_area[2]*inter_area[3]) < 10:
+def compare_img(img, last_img, inter_rect):
+    sad = np.sum(np.absolute(img[inter_rect[1]:inter_rect[1]+inter_rect[3],
+                           inter_rect[0]:inter_rect[0]+inter_rect[2]] -
+                       last_img[inter_rect[1]:inter_rect[1]+inter_rect[3],
+                           inter_rect[0]:inter_rect[0]+inter_rect[2]]))
+    if sad/(inter_rect[2]*inter_rect[3]) < 10:
         return True
     else:
         return False
@@ -84,6 +84,7 @@ def detect_image(net, im, fisheye_type, last_image_file, last_targets):
     # Detect all object classes and regress object bounds
     timer = Timer()
     timer.tic()
+    origin_im = im
     undist_type = int(fisheye_type)
     if undist_type != -1:
         im = hs_fisheye.image_undistortion(im, undist_type)
@@ -130,24 +131,24 @@ def detect_image(net, im, fisheye_type, last_image_file, last_targets):
                 (x,y,w,h) = hs_fisheye.point_projection(x,y,w,h, undist_type)
             targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac, 'conf': int(100.0*r[4])})
 
+    filtered_targets = targets
     if last_image_file is not None and last_targets is not None:
         #load last image file
         try:
             last_img = cv2.imread(last_image_file)
-            if last_img.shape != im.shape:
-                filtered_targets = targets
-            else:
+            if last_img.shape == origin_im.shape:
                 filtered_targets = []
                 for t in targets:
                     filtered = False
                     for lt in last_targets:
                         t_rect = (t['x'], t['y'], t['w'], t['h'])
                         lt_rect = (lt['x'], lt['y'], lt['w'], lt['h'])
-                        inter_rect = intersection(t, lt)
+                        inter_rect = intersection(t_rect, lt_rect)
+                        # print inter_rect
                         inter_area = inter_rect[2]*inter_rect[3]
                         if (inter_area>(t_rect[2]*t_rect[3]*0.95) and
                             inter_area>(lt_rect[2]*lt_rect[3]*0.95)):
-                            filtered = compare_img(im, last_img, inter_area)
+                            filtered = compare_img(origin_im, last_img, inter_rect)
                             # only one possible intersected target
                             break
 
