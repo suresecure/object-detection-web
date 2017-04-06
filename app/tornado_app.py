@@ -58,6 +58,7 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
             global device_last_access_dict
             fisheye_type = self.get_argument('fisheye_type', default='-1')
             device_id = self.get_argument('device_id', default='')
+            print fisheye_type, device_id
             # access_log = AccessLog()
 
             image_bytestr = self.request.files['image'][0].body
@@ -67,6 +68,7 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
                 werkzeug.secure_filename(filename)
 
             if device_last_access_dict.has_key(device_id):
+                print 'device has access history'
                 last_datetime, last_image_file, last_targets = device_last_access_dict[device_id]
                 time_delta = datetime.datetime.now() - last_datetime
                 if time_delta.seconds > 10*60:
@@ -95,8 +97,10 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
             else:
                 # self.write({'targets': result})
                 origin_targets, filtered_targets = result
+                print origin_targets, filtered_targets
                 self.write({'targets': filtered_targets})
-                device_last_access_dict[device_id] = (datetime.datetime.now(), store_file_name, origin_targets)
+                if device_id != '':
+                    device_last_access_dict[device_id] = (datetime.datetime.now(), store_file_name, origin_targets)
             # print '2', local_count
         # except celery.exceptions.TaskRevokedError:
             # print('time is out')
@@ -177,7 +181,7 @@ def remove_history_images_uploaded():
                 avail_size = stat.f_bsize * stat.f_bavail
                 if avail_size < MIN_AVAIL_DISK_SIZE:
                     print 'rm tmp image dir due to lack of disk space: ', path
-                    shutil.rmtree(path)
+                    # shutil.rmtree(path)
         except ValueError, verror:
             print verror
             # delete dirs not created by app
