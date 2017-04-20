@@ -2,7 +2,7 @@ prototxt = "/home/srzn/models/frv-9c-call-face/frv-9c-call-face.pt"
 caffemodel = "/home/srzn/models/frv-9c-call-face/frv-9c-call-face-20170429.caffemodel"
 
 CLASSES = ('__background__',
-		'person','callingphone','sunglasses', 'mask','hat', 		'safety_helmet','helmet','glasses')
+		'person','call','sunglasses', 'mask','hat', 		'safety_helmet','helmet','glasses')
 active_classes = ['call', 'sunglasses', 'hat', 'safety_helmet', 'helmet', 'mask']
 #for analog cameras
 label_alias = {'safety_helmet':'helmet'}
