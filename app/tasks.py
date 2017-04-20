@@ -76,10 +76,13 @@ def detect_image(net, im):
     CONF_THRESH = 0.4
     NMS_THRESH = 0.1
     active_thds = {}
+    label_alias = {}
     if hasattr(model_config, 'active_thds'):
         active_thds = model_config.active_thds
     if hasattr(model_config, 'default_thd'):
         CONF_THRESH = model_config.default_thd
+    if hasattr(model_config, 'label_alias'):
+        label_alias = model_config.label_alias
 
     targets = []
     for ac in model_config.active_classes:
@@ -104,7 +107,10 @@ def detect_image(net, im):
             y = (int)(r[1].item())
             w = (int)(r[2].item())-x
             h = (int)(r[3].item())-y
-            targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac, 'conf': int(100.0*r[4])})
+            ac_alias = ac
+            if ac in label_alias:
+                ac_alias = label_alias[ac]
+            targets.append({'x':x,'y':y,'w':w,'h':h, 'label': ac_alias, 'conf': int(100.0*r[4])})
     return targets
 
     # person_idx = CLASSES.index('person')
