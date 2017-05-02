@@ -45,31 +45,39 @@ def next_post():
     if request_count<200:
         io_loop.add_timeout(datetime.timedelta(milliseconds=interval), next_post)
 
-io_loop = tornado.ioloop.IOLoop.current()
-io_loop.add_timeout(datetime.timedelta(milliseconds=interval), next_post)
-io_loop.start()
+# io_loop = tornado.ioloop.IOLoop.current()
+# io_loop.add_timeout(datetime.timedelta(milliseconds=interval), next_post)
+# io_loop.start()
 
-# def print_content(response):
-    # print response.content
-# with open('/home/mythxcq/test.jpeg', 'rb') as f:
-    # image_content = f.read()
+def print_content(response):
+    print response.content
+with open('/home/srzn-office/helmet.jpg', 'rb') as f:
+    image_content = f.read()
 
-# files = {'image': image_content}
-# items = [grequests.post("http://localhost:8080/person_detection", files=files)]
-# items = []
-# for i in range(400):
-    # files = {'image': open('/home/mythxcq/3.jpeg', 'rb')}
-    # items.append(grequests.post("http://localhost:8080/person_detection", files=files))
-    # # items.append(grequests.post("http://localhost:8080/person_detection"))
+files = {'image': image_content}
+items = [grequests.post("http://localhost:8080/person_detection", files=files)]
+items = []
+for i in range(100):
+    files = {'image': open('/home/srzn-office/helmet.jpg', 'rb')}
+    items.append(grequests.post("http://localhost:8080/person_detection", files=files))
+    # items.append(grequests.post("http://localhost:8080/person_detection"))
 
-# import pdb; pdb.set_trace()  # XXX BREAKPOINT
-# print 'send all post'
-# r = grequests.map(items)
-# pres = ''
-# for res in r:
-    # pres += res.content+'\t'
-    # # print res.content
-# print pres
+print 'send all post'
+r = grequests.map(items)
+pres = ''
+success = 0
+failed = 0
 
-# # r = requests.post("http://localhost:8080/person_detection", files=files)
-# # print r.content
+for res in r:
+    pres += res.content+'\t'
+    if res.content.startswith('{\"targets\"'):
+        success += 1
+    else:
+        failed += 1
+    # print res.content
+print pres
+print success
+print failed
+
+# r = requests.post("http://localhost:8080/person_detection", files=files)
+# print r.content
