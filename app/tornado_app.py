@@ -118,6 +118,12 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
         self.finish()
         # print '4', local_count
 
+class VersionHandler(tornado.web.RequestHandler):
+    @gen.coroutine
+    def get(self):
+        self.write({'version': '0.9.5'})
+        self.finish()
+
 MIN_AVAIL_DISK_SIZE = 1000 * 1024 * 1024 * 1024
 if hasattr(config, 'MIN_AVAIL_DISK_SIZE'):
     MIN_AVAIL_DISK_SIZE = config.MIN_AVAIL_DISK_SIZE
@@ -218,7 +224,8 @@ scheduler.start()
 def make_app():
     return tornado.web.Application([
         (r"/person_detection", ObjectDetectionHandler),
-        (r"/object_detection", ObjectDetectionHandler)
+        (r"/object_detection", ObjectDetectionHandler),
+        (r"/version", VersionHandler)
     ])
 
 
