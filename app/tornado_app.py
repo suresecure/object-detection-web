@@ -69,9 +69,15 @@ class ObjectDetectionHandler(tornado.web.RequestHandler):
             res = object_detection_task.apply_async(
                 args=[imagestream, filename_], expires=2)
             # print 'send task over', local_count
-            yield gen.sleep(1)
+            wait_times = 3
+            while wait_times>0:
+                yield gen.sleep(1)
+                result = res.result
+                if result is None:
+                    wait_times -= 1
+                else:
+                    break
             # store_upload_image(imagestream, filename_)
-
             result = res.result
             if result is None:
                 res.revoke()
